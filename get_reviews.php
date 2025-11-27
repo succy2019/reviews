@@ -13,9 +13,16 @@ $reviews = [];
 
 if (file_exists($reviewsFile)) {
     $content = file_get_contents($reviewsFile);
-    $reviews = json_decode($content, true);
-    if (!is_array($reviews)) {
-        $reviews = [];
+    $allReviews = json_decode($content, true);
+    if (!is_array($allReviews)) {
+        $allReviews = [];
+    }
+    
+    // Filter only approved reviews
+    foreach ($allReviews as $review) {
+        if (isset($review['approved']) && $review['approved'] === true) {
+            $reviews[] = $review;
+        }
     }
 }
 

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0,0,0,0.2);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .reviews-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .review-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .reviewer-info {
+            flex: 1;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .review-date {
+            color: #999;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .review-rating {
+            color: #ffc107;
+            font-size: 24px;
+        }
+
+        .review-comment {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-approve {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-reject {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .no-reviews {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: #999;
+            font-size: 18px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Review Admin Panel</h1>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">Total Reviews</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Pending Approval</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedCount">0</div>
+                <div class="stat-label">Approved</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('pending')">Pending Reviews</button>
+            <button class="tab-btn" onclick="switchTab('approved')">Approved Reviews</button>
+            <button class="tab-btn" onclick="switchTab('all')">All Reviews</button>
+        </div>
+
+        <div id="pending" class="tab-content active">
+            <div class="reviews-grid" id="pendingReviews">
+                <div class="loading">Loading pending reviews...</div>
+            </div>
+        </div>
+
+        <div id="approved" class="tab-content">
+            <div class="reviews-grid" id="approvedReviews">
+                <div class="loading">Loading approved reviews...</div>
+            </div>
+        </div>
+
+        <div id="all" class="tab-content">
+            <div class="reviews-grid" id="allReviews">
+                <div class="loading">Loading all reviews...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reviewsData = null;
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+        }
+
+        function getStars(rating) {
+            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        async function loadReviews() {
+            try {
+                const response = await fetch('admin_reviews.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    reviewsData = data;
+                    updateStats(data);
+                    displayReviews('pending', data.pending);
+                    displayReviews('approved', data.approved);
+                    displayReviews('all', data.all);
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('totalCount').textContent = data.all.length;
+            document.getElementById('pendingCount').textContent = data.pendingCount;
+            document.getElementById('approvedCount').textContent = data.approvedCount;
+        }
+
+        function displayReviews(type, reviews) {
+            const container = document.getElementById(type + 'Reviews');
+
+            if (reviews.length === 0) {
+                container.innerHTML = '<div class="no-reviews">No ' + type + ' reviews</div>';
+                return;
+            }
+
+            container.innerHTML = reviews.map(review => `
+                <div class="review-card" id="review-${review.id}">
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="reviewer-name">${review.name}</div>
+                            <div class="review-date">Submitted: ${formatDate(review.date)}</div>
+                            ${review.approvedDate ? `<div class="review-date">Approved: ${formatDate(review.approvedDate)}</div>` : ''}
+                        </div>
+                        <div>
+                            <div class="review-rating">${getStars(review.rating)}</div>
+                            <span class="status-badge status-${review.status || 'pending'}">
+                                ${review.status || 'pending'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="review-comment">${review.comment}</div>
+                    <div class="review-actions">
+                        ${review.approved !== true ? `
+                            <button class="btn btn-approve" onclick="handleReview('${review.id}', 'approve')">
+                                ✓ Approve
+                            </button>
+                            <button class="btn btn-reject" onclick="handleReview('${review.id}', 'reject')">
+                                ✗ Reject
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-delete" onclick="handleReview('${review.id}', 'delete')">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function handleReview(reviewId, action) {
+            const confirmed = confirm(`Are you sure you want to ${action} this review?`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('admin_reviews.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: reviewId,
+                        action: action
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    
+                    // Remove the review card with animation
+                    const card = document.getElementById('review-' + reviewId);
+                    if (card) {
+                        card.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => {
+                            loadReviews(); // Reload all reviews
+                        }, 300);
+                    }
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to ' + action + ' review');
+            }
+        }
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadReviews, 10000);
+
+        // Initial load
+        loadReviews();
+    </script>
+</body>
+</html>

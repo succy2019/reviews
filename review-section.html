@@ -318,10 +318,21 @@
                         selectedRating = 0;
                         updateStars();
 
-                        // Reload reviews
-                        loadReviews();
-                        
-                        alert('Thank you for your review!');
+                        // Show pending message
+                        if (result.pending) {
+                            alert('Thank you for your review! It will be published after approval by our moderators.');
+                        } else {
+                            // Show success notification
+                            showNotification({
+                                name: formData.name,
+                                rating: formData.rating
+                            });
+                        }
+
+                        // Reload reviews after a short delay
+                        setTimeout(() => {
+                            loadReviews();
+                        }, 500);
                     } else {
                         alert('Error: ' + result.message);
                     }

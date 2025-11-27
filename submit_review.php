@@ -45,7 +45,9 @@ $newReview = [
     'rating' => $rating,
     'comment' => htmlspecialchars(trim($input['comment']), ENT_QUOTES, 'UTF-8'),
     'timestamp' => time(),
-    'date' => date('Y-m-d H:i:s')
+    'date' => date('Y-m-d H:i:s'),
+    'approved' => false,
+    'status' => 'pending'
 ];
 
 // Add to beginning of array
@@ -56,8 +58,9 @@ $result = @file_put_contents($reviewsFile, json_encode($reviews, JSON_PRETTY_PRI
 if ($result !== false) {
     echo json_encode([
         'success' => true,
-        'message' => 'Review submitted successfully',
-        'review' => $newReview
+        'message' => 'Review submitted successfully and is pending approval',
+        'review' => $newReview,
+        'pending' => true
     ]);
 } else {
     $error = error_get_last();
