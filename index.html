@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Investment Popups</title>
+  <style>
+    :root{ --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8 }
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial; background:linear-gradient(180deg,#071026 0%, #081226 100%); color:#e6eef6; height:100vh; margin:0; display:flex; align-items:center; justify-content:center}
+    .demo-wrap{max-width:980px;width:100%;padding:28px}
+
+    /* Popup container (bottom-left) */
+    .popup-container{position:fixed; left:20px; bottom:20px; display:flex; flex-direction:column; gap:12px; z-index:9999}
+
+    .popup{
+      width:320px; display:flex; gap:12px; align-items:center; padding:12px; border-radius:12px; box-shadow:0 8px 30px rgba(2,6,23,0.6); background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04);
+      transform-origin:left bottom; opacity:0; transform:translateY(12px) scale(0.98);
+      transition:opacity .45s cubic-bezier(.2,.9,.3,1), transform .45s cubic-bezier(.2,.9,.3,1);
+      backdrop-filter: blur(6px);
+    }
+    .popup.show{opacity:1; transform:translateY(0) scale(1)}
+    .avatar{width:52px; height:52px; border-radius:10px; flex-shrink:0; background:#223; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; color:var(--accent); border:1px solid rgba(255,255,255,0.04)}
+    .content{flex:1}
+    .line1{font-weight:600; font-size:15px}
+    .line2{font-size:13px; color:var(--muted); margin-top:3px}
+    .amount{font-weight:700; color:var(--accent); font-size:15px}
+    .close-btn{margin-left:8px; background:transparent; border:0; color:var(--muted); cursor:pointer}
+
+    /* Controls */
+    .controls{background:rgba(255,255,255,0.02); padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); margin-bottom:18px}
+    .controls label{display:block; font-size:13px; color:var(--muted); margin-bottom:8px}
+    .row{display:flex; gap:12px; align-items:center}
+    input[type=range]{width:220px}
+    .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;background:var(--accent); color:#042027; font-weight:600}
+    .small{font-size:13px}
+
+    footer{margin-top:18px; color:var(--muted); font-size:13px}
+
+    @media (max-width:420px){.popup{width:280px}}
+  </style>
+</head>
+<body>
+  <div class="demo-wrap">
+    <h2 style="margin:0 0 12px">Live "Someone just invested" popup — demo</h2>
+    <div class="controls">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+        <div>
+          <label>Show interval (seconds)</label>
+          <input id="intervalRange" type="range" min="3" max="20" value="8">
+          <div class="small">Current: <span id="intervalVal">8</span>s</div>
+        </div>
+        <div>
+          <label>Auto-show</label>
+          <div style="margin-top:6px"><button id="toggleAuto" class="btn">Pause</button></div>
+        </div>
+        <div>
+          <label>Test</label>
+          <div style="margin-top:6px"><button id="triggerNow" class="btn">Show popup</button></div>
+        </div>
+      </div>
+      <div class="row small">
+        <div style="flex:1">
+          <label>Style</label>
+          <select id="styleSelect" style="padding:6px;border-radius:6px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.04)">
+            <option value="default">Default — small card</option>
+            <option value="compact">Compact — condensed</option>
+            <option value="large">Large — with message</option>
+          </select>
+        </div>
+        <div style="width:220px">
+          <label>Currency</label>
+          <input id="currency" value="$" style="width:100%;padding:6px;border-radius:6px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.04)" />
+        </div>
+      </div>
+    </div>
+
+    <p style="color:var(--muted);margin:8px 0 0">This static demo simulates new investments popping up in the bottom-left. You can copy this single file and integrate real events by calling <code>showPopup()</code> from your backend/websocket.
+    </p>
+    <footer>Tip: Connect to your server via WebSocket and call <code>showPopup({name, amount, timeAgo})</code> when a real investment happens.</footer>
+  </div>
+
+  <!-- Popup container -->
+  <div class="popup-container" id="popupContainer"></div>
+
+  <script>
+    // Sample data lists used to generate random demo popups
+    const names = ['Sam', 'Aisha', 'Daniel', 'Chioma', 'Emeka', 'Olivia', 'Tunde', 'Grace', 'Musa', 'Ruth'];
+    const places = ['Lagos','Abuja','London','Accra','Kano','Ibadan','Port Harcourt'];
+
+    const popupContainer = document.getElementById('popupContainer');
+    let auto = true;
+    let intervalSec = 8;
+    let timerId = null;
+
+    // Show a popup. You can call this externally with real data
+    function showPopup({name, amount, currency = '$', location = '', message = ''} = {}){
+      // provide defaults if missing
+      if(!name) name = names[Math.floor(Math.random()*names.length)];
+      if(!amount) amount = (Math.floor(Math.random()*95)+5) * 10; // random 50..1000-ish
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'popup show';
+
+      // compact/large style switch
+      const style = document.getElementById('styleSelect').value;
+
+      wrapper.innerHTML = `
+        <div class=avatar>${name.charAt(0).toUpperCase()}</div>
+        <div class=content>
+          <div class=line1>${name} just invested <span class="amount">${currency}${amount.toLocaleString()}</span></div>
+          <div class=line2>${location || places[Math.floor(Math.random()*places.length)]} • ${timeAgo()}</div>
+          ${style === 'large' ? `<div class=line2 style="margin-top:6px;color:var(--muted);font-size:13px">${message || 'Fast, secure investment — processed'}</div>` : ''}
+        </div>
+        <button class=close-btn aria-label="dismiss">✕</button>
+      `;
+
+      // apply compact adjustments
+      if(style === 'compact'){
+        wrapper.style.width = '260px';
+        wrapper.querySelector('.avatar').style.width = '44px';
+        wrapper.querySelector('.avatar').style.height = '44px';
+        wrapper.querySelector('.line1').style.fontSize = '14px';
+      }
+
+      popupContainer.appendChild(wrapper);
+
+      // Close button
+      wrapper.querySelector('.close-btn').addEventListener('click', () => {
+        hidePopup(wrapper);
+      });
+
+      // Auto-hide after 5s
+      setTimeout(() => hidePopup(wrapper), 5000);
+
+      return wrapper;
+    }
+
+    function hidePopup(el){
+      el.classList.remove('show');
+      // remove after transition
+      setTimeout(()=> el.remove(), 600);
+    }
+
+    function timeAgo(){
+      const secs = Math.floor(Math.random()*59)+1;
+      return secs + 's ago';
+    }
+
+    // Auto-run loop
+    function startLoop(){
+      stopLoop();
+      timerId = setInterval(()=>{
+        if(auto) showPopup({});
+      }, intervalSec * 1000);
+    }
+    function stopLoop(){ if(timerId) clearInterval(timerId); timerId = null }
+
+    // UI controls
+    document.getElementById('intervalRange').addEventListener('input', (e)=>{
+      intervalSec = parseInt(e.target.value,10);
+      document.getElementById('intervalVal').textContent = intervalSec;
+      startLoop();
+    });
+
+    document.getElementById('toggleAuto').addEventListener('click', (e)=>{
+      auto = !auto;
+      e.target.textContent = auto ? 'Pause' : 'Resume';
+    });
+
+    document.getElementById('triggerNow').addEventListener('click', ()=> showPopup({}));
+
+    // start
+    startLoop();
+
+    // Expose showPopup globally so backend/websocket code can call it
+    window.showPopup = showPopup;
+
+    // Example: how to trigger from a WebSocket (pseudo)
+    /*
+    const ws = new WebSocket('wss://yourserver.example/ws');
+    ws.onmessage = (evt) => {
+      const data = JSON.parse(evt.data); // { name, amount, currency, location }
+      showPopup(data);
+    }
+    */
+  </script>
+</body>
+</html>
