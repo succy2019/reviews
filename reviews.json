@@ -6,7 +6,96 @@
         "comment": "qqqqqqqq",
         "timestamp": 1764347171,
         "date": "2025-11-28 16:26:11",
-        "approved": false,
-        "status": "pending"
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 16:30:00"
+    },
+    {
+        "id": "6929cd23d7dc5",
+        "name": "Sarah Johnson",
+        "rating": 5,
+        "comment": "Absolutely amazing service! Highly recommended to everyone.",
+        "timestamp": 1764347200,
+        "date": "2025-11-28 16:00:00",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 16:05:00"
+    },
+    {
+        "id": "6929cd23d7dc6",
+        "name": "Michael Chen",
+        "rating": 4,
+        "comment": "Great experience overall. Fast delivery and excellent customer support.",
+        "timestamp": 1764346800,
+        "date": "2025-11-28 15:53:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:55:00"
+    },
+    {
+        "id": "6929cd23d7dc7",
+        "name": "Emily Rodriguez",
+        "rating": 5,
+        "comment": "Best investment I've made this year! The returns are incredible.",
+        "timestamp": 1764346500,
+        "date": "2025-11-28 15:48:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:50:00"
+    },
+    {
+        "id": "6929cd23d7dc8",
+        "name": "David Thompson",
+        "rating": 5,
+        "comment": "Professional team, transparent process. I'm very satisfied with the results.",
+        "timestamp": 1764346200,
+        "date": "2025-11-28 15:43:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:45:00"
+    },
+    {
+        "id": "6929cd23d7dc9",
+        "name": "Lisa Anderson",
+        "rating": 4,
+        "comment": "Very good platform. Easy to use and reliable. Would recommend to friends.",
+        "timestamp": 1764345900,
+        "date": "2025-11-28 15:38:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:40:00"
+    },
+    {
+        "id": "6929cd23d7dca",
+        "name": "James Wilson",
+        "rating": 5,
+        "comment": "Exceeded my expectations! The platform is user-friendly and support is top-notch.",
+        "timestamp": 1764345600,
+        "date": "2025-11-28 15:33:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:35:00"
+    },
+    {
+        "id": "6929cd23d7dcb",
+        "name": "Maria Garcia",
+        "rating": 5,
+        "comment": "Outstanding service from start to finish. I've already recommended to my family.",
+        "timestamp": 1764345300,
+        "date": "2025-11-28 15:28:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:30:00"
+    },
+    {
+        "id": "6929cd23d7dcc",
+        "name": "Robert Martinez",
+        "rating": 4,
+        "comment": "Solid platform with great features. Customer service responds quickly.",
+        "timestamp": 1764345000,
+        "date": "2025-11-28 15:23:20",
+        "approved": true,
+        "status": "approved",
+        "approvedDate": "2025-11-28 15:25:00"
     }
 ]

@@ -153,20 +153,22 @@
 
         .review-notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            bottom: 20px;
+            left: 20px;
             background: white;
             padding: 20px 30px;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             z-index: 10000;
-            transform: translateX(400px);
+            transform: translateX(-400px);
             transition: transform 0.3s ease;
             max-width: 350px;
+            opacity: 0;
         }
 
         .review-notification.show {
             transform: translateX(0);
+            opacity: 1;
         }
 
         .notification-header {
@@ -240,8 +242,8 @@
     <!-- Notification Popup -->
     <div class="review-notification" id="reviewNotification">
         <div class="notification-header">
-            <span class="notification-icon">🔔</span>
-            <span class="notification-title">New Review!</span>
+            <span class="notification-icon">&#128276;</span>
+            <span class="notification-title">Customer Review</span>
         </div>
         <div class="notification-message" id="reviewNotificationMessage"></div>
     </div>
@@ -250,6 +252,9 @@
         (function() {
             let selectedRating = 0;
             let lastCheckTimestamp = Math.floor(Date.now() / 1000);
+            let approvedReviews = [];
+            let currentPopupIndex = 0;
+            let autoPopupInterval = null;
 
             // Star rating functionality
             const stars = document.querySelectorAll('#ratingStars .star');
@@ -350,7 +355,13 @@
 
                     if (data.success) {
                         displayReviews(data.reviews);
+                        approvedReviews = data.reviews;
                         lastCheckTimestamp = Math.floor(Date.now() / 1000);
+                        
+                        // Start auto popup if we have reviews
+                        if (approvedReviews.length > 0 && !autoPopupInterval) {
+                            startAutoPopup();
+                        }
                     }
                 } catch (error) {
                     console.error('Error loading reviews:', error);
@@ -421,13 +432,55 @@
                 const notification = document.getElementById('reviewNotification');
                 const message = document.getElementById('reviewNotificationMessage');
                 
-                message.textContent = `${review.name} just left a ${review.rating}-star review!`;
+                if (!review || !review.name) {
+                    console.error('Invalid review data:', review);
+                    return;
+                }
                 
-                notification.classList.add('show');
+                const stars = getStars(review.rating);
+                const reviewerName = escapeHtml(review.name);
+                const reviewComment = escapeHtml(review.comment || '');
+                const commentPreview = reviewComment.length > 60 ? reviewComment.substring(0, 60) + '...' : reviewComment;
                 
+                message.innerHTML = `<strong>${reviewerName}</strong> left a ${stars} review!<br><em style="font-size: 12px; color: #999;">"${commentPreview}"</em>`;
+                
+                // Remove show class first to reset animation
+                notification.classList.remove('show');
+                
+                // Add show class after a tiny delay to trigger animation
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 10);
+                
+                // Auto-hide after 1.8 seconds (before next popup)
                 setTimeout(() => {
                     notification.classList.remove('show');
-                }, 5000);
+                }, 1800);
+            }
+
+            // Start automatic popup of reviews
+            function startAutoPopup() {
+                // Clear any existing interval
+                if (autoPopupInterval) {
+                    clearInterval(autoPopupInterval);
+                }
+
+                // Show popup every 2 seconds
+                autoPopupInterval = setInterval(() => {
+                    if (approvedReviews.length > 0) {
+                        const review = approvedReviews[currentPopupIndex];
+                        showNotification(review);
+                        currentPopupIndex = (currentPopupIndex + 1) % approvedReviews.length;
+                    }
+                }, 4000);
+
+                // Show first popup after 1 second
+                if (approvedReviews.length > 0) {
+                    setTimeout(() => {
+                        showNotification(approvedReviews[0]);
+                        currentPopupIndex = (currentPopupIndex + 1) % approvedReviews.length;
+                    }, 4000);
+                }
             }
 
             // Check for new reviews periodically
@@ -437,16 +490,17 @@
                     const data = await response.json();
 
                     if (data.success && data.newReviews.length > 0) {
-                        // Show notification for each new review
-                        data.newReviews.forEach((review, index) => {
-                            setTimeout(() => {
-                                showNotification(review);
-                            }, index * 1000);
-                        });
-
+                        // Update approved reviews array
+                        approvedReviews = data.reviews;
+                        
                         // Reload all reviews
                         displayReviews(data.reviews);
                         lastCheckTimestamp = Math.floor(Date.now() / 1000);
+                        
+                        // Restart auto popup with new reviews
+                        if (approvedReviews.length > 0) {
+                            startAutoPopup();
+                        }
                     }
                 } catch (error) {
                     console.error('Error checking new reviews:', error);
