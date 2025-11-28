@@ -4,6 +4,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// Include email configuration
+require_once 'config.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
@@ -56,6 +59,12 @@ array_unshift($reviews, $newReview);
 // Save to file
 $result = @file_put_contents($reviewsFile, json_encode($reviews, JSON_PRETTY_PRINT));
 if ($result !== false) {
+    // Log success
+    error_log('Review saved successfully. File size: ' . $result . ' bytes');
+    
+    // Send email notification to admin
+    sendEmailNotification($newReview);
+    
     echo json_encode([
         'success' => true,
         'message' => 'Review submitted successfully and is pending approval',
@@ -70,5 +79,89 @@ if ($result !== false) {
         'message' => 'Failed to save review. Check file permissions.',
         'error' => $error['message'] ?? 'Unknown error'
     ]);
+}
+
+/**
+ * Send email notification to admin about new review
+ */
+function sendEmailNotification($review) {
+    // Check if email notifications are enabled
+    if (!EMAIL_NOTIFICATIONS_ENABLED) {
+        return;
+    }
+    
+    $adminEmail = ADMIN_EMAIL;
+    $subject = '🔔 New Review Pending Approval';
+    
+    // Create star rating display
+    $stars = str_repeat('⭐', $review['rating']);
+    
+    // Email body (HTML)
+    $message = '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; }
+            .content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; }
+            .review-box { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea; }
+            .rating { color: #ffc107; font-size: 20px; margin: 10px 0; }
+            .comment { color: #555; margin: 10px 0; }
+            .meta { color: #999; font-size: 14px; }
+            .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+            .footer { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>🔔 New Review Submitted</h2>
+            </div>
+            <div class="content">
+                <p>A new review has been submitted and is awaiting your approval.</p>
+                
+                <div class="review-box">
+                    <h3>' . htmlspecialchars($review['name']) . '</h3>
+                    <div class="rating">' . $stars . ' (' . $review['rating'] . '/5)</div>
+                    <div class="comment">"' . nl2br(htmlspecialchars($review['comment'])) . '"</div>
+                    <div class="meta">Submitted on: ' . $review['date'] . '</div>
+                </div>
+                
+                <p style="text-align: center; margin: 20px 0;">
+                    <a href="' . SITE_URL . '/admin.html" class="button">Review in Admin Panel</a>
+                </p>
+                
+                <p style="color: #666; font-size: 14px;">
+                    <strong>Review ID:</strong> ' . $review['id'] . '<br>
+                    <strong>Status:</strong> Pending Approval
+                </p>
+            </div>
+            <div class="footer">
+                <p>This is an automated notification from your Review System.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ';
+    
+    // Email headers
+    $headers = "MIME-Version: 1.0" . "\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    $headers .= "From: " . EMAIL_FROM_NAME . " <" . EMAIL_FROM . ">" . "\r\n";
+    $headers .= "Reply-To: " . EMAIL_FROM . "\r\n";
+    
+    // Send email
+    $emailSent = @mail($adminEmail, $subject, $message, $headers);
+    
+    // Log result
+    if ($emailSent) {
+        error_log('Email notification sent to: ' . $adminEmail);
+    } else {
+        error_log('Failed to send email notification to: ' . $adminEmail);
+    }
+    
+    return $emailSent;
 }
 ?>
